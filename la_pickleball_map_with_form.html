@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LA & OC Pickleball Courts Map</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.css"/>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 0;
+            opacity: 0.95;
+            font-size: 16px;
+        }
+        
+        .disclaimer {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            font-size: 14px;
+            color: #856404;
+            line-height: 1.5;
+        }
+        
+        .disclaimer strong {
+            font-weight: 600;
+        }
+        
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+        }
+        
+        .folium-map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .submission-section {
+            background: #f8f9fa;
+            padding: 30px 20px;
+            border-top: 2px solid #dee2e6;
+        }
+        
+        .submission-form {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .submission-form h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .submission-form > p {
+            margin: 0 0 20px 0;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .submit-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background: #5568d3;
+        }
+        
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            display: none;
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            .header p {
+                font-size: 14px;
+            }
+            .map-container {
+                height: 400px;
+            }
+            .submission-form {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🏓 LA & Orange County Pickleball Courts</h1>
+        <p>53 facilities • 304 courts • Updated weekly</p>
+    </div>
+    
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+        <strong>⚠️ Important:</strong> Information is based on facility websites and may not always be current. Hours, pricing, and availability can change. <strong>Please call venues directly for the most accurate information before visiting.</strong>
+    </div>
+    
+    <!-- Map -->
+    <div class="map-container">
+<div class="folium-map" id="map_577cd1e2958c609247f8e8cf6364de84" ></div>
+        
+
+    </div>
+    
+    <!-- Submission Form -->
+    <div class="submission-section">
+        <div class="submission-form">
+            <h3>📝 Have a correction or update?</h3>
+            <p>Help us keep this map accurate! Submit corrections, updates, or new facilities below.</p>
+            
+            <form id="correctionForm">
+                <div class="form-group">
+                    <label for="correctionType">Issue Type *</label>
+                    <select id="correctionType" required>
+                        <option value="">Select issue type...</option>
+                        <option value="Incorrect Hours">Incorrect Hours</option>
+                        <option value="Incorrect Pricing">Incorrect Pricing</option>
+                        <option value="Incorrect Address">Incorrect Address/Location</option>
+                        <option value="Incorrect Phone">Incorrect Phone Number</option>
+                        <option value="Incorrect Courts">Incorrect Number of Courts</option>
+                        <option value="Facility Closed">Facility Closed/No Longer Available</option>
+                        <option value="New Facility">New Facility to Add</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="facilityName">Facility Name *</label>
+                    <input type="text" id="facilityName" placeholder="e.g., PIKL LA, Wolf and Bear" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="correctionDetails">Details *</label>
+                    <textarea id="correctionDetails" placeholder="Please describe the correction or provide updated information..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userEmail">Your Email (optional)</label>
+                    <input type="email" id="userEmail" placeholder="If you'd like a response">
+                </div>
+                
+                <button type="submit" class="submit-btn">Submit Correction</button>
+                
+                <div class="message success-message" id="successMessage">
+                    ✓ Thank you! Your submission has been received and will be reviewed.
+                </div>
+                
+                <div class="message error-message" id="errorMessage">
+                    ✗ There was an error. Please try again or email us directly.
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Google Apps Script Web App URL - REPLACE WITH YOUR URL
+        const FORM_SUBMIT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE';
+        
+        document.getElementById('correctionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('.submit-btn');
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            // Hide messages
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Collect data
+            const formData = {
+                timestamp: new Date().toISOString(),
+                type: document.getElementById('correctionType').value,
+                facilityName: document.getElementById('facilityName').value,
+                details: document.getElementById('correctionDetails').value,
+                email: document.getElementById('userEmail').value || 'Not provided'
+            };
+            
+            try {
+                await fetch(FORM_SUBMIT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formData)
+                });
+                
+                successMsg.style.display = 'block';
+                this.reset();
+                successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Correction';
+            }
+        });
+    </script>
+</body>
+<script>
+    
+    
+            var map_577cd1e2958c609247f8e8cf6364de84 = L.map(
+                "map_577cd1e2958c609247f8e8cf6364de84",
+                {
+                    center: [34.0522, -118.2437],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 10,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_267ff9f2b3e8242b93f5bb746d7a008b = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_267ff9f2b3e8242b93f5bb746d7a008b.addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var circle_marker_8acc9afa03a362c424ec8a8fc95ea6aa = L.circleMarker(
+                [33.957833, -118.286859],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_f5e875d3a4216633b3a18e7004a498f7 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_124129fe322836ba9f7408b013f0e8b4 = $(`<div id="html_124129fe322836ba9f7408b013f0e8b4" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Algin Sutton Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>8800 South Hoover St, Los Angeles, CA 90044</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (323) 753-5808</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_f5e875d3a4216633b3a18e7004a498f7.setContent(html_124129fe322836ba9f7408b013f0e8b4);
+            
+        
+
+        circle_marker_8acc9afa03a362c424ec8a8fc95ea6aa.bindPopup(popup_f5e875d3a4216633b3a18e7004a498f7)
+        ;
+
+        
+    
+    
+            circle_marker_8acc9afa03a362c424ec8a8fc95ea6aa.bindTooltip(
+                `<div>
+                     Algin Sutton Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_742f0ff98598fc5ba98130d2e0bf8d6e = L.marker(
+                [33.957833, -118.286859],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_8e2513f723a992ab198f178b1e31d65a = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_742f0ff98598fc5ba98130d2e0bf8d6e.setIcon(div_icon_8e2513f723a992ab198f178b1e31d65a);
+            
+    
+            var circle_marker_f9a4a1107b7905b85464f4608fe6f4ea = L.circleMarker(
+                [33.8248972, -117.8896217],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_d28080ad96a91756be0b28c9b35cc4bb = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_72e2e82f60ca7375d4873e0d723cd2cd = $(`<div id="html_72e2e82f60ca7375d4873e0d723cd2cd" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Anaheim Tennis Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 18</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>975 S State College Blvd, Anaheim, CA 92806</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (714) 991-9090</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://anaheimtenniscenter.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Court Rental: Contact</li><li>Drop-in Saturday: Contact</li></ul></div></div>`)[0];
+                popup_d28080ad96a91756be0b28c9b35cc4bb.setContent(html_72e2e82f60ca7375d4873e0d723cd2cd);
+            
+        
+
+        circle_marker_f9a4a1107b7905b85464f4608fe6f4ea.bindPopup(popup_d28080ad96a91756be0b28c9b35cc4bb)
+        ;
+
+        
+    
+    
+            circle_marker_f9a4a1107b7905b85464f4608fe6f4ea.bindTooltip(
+                `<div>
+                     Anaheim Tennis Center (18 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_22764c0cbfd8492339c3e7e8e8c7abc9 = L.marker(
+                [33.8248972, -117.8896217],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_4622ca09ab5251384cc12944bd9c7438 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        18\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_22764c0cbfd8492339c3e7e8e8c7abc9.setIcon(div_icon_4622ca09ab5251384cc12944bd9c7438);
+            
+    
+            var circle_marker_3977ecf6e9e6c27719dfa5f82a220958 = L.circleMarker(
+                [33.7362767, -118.2852631],
+                {"bubblingMouseEvents": true, "color": "#FFE66D", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FFE66D", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_f22f0ed55756aad0532780562813a1f3 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_e8d61d60ba9a71930d2d62410d1c2517 = $(`<div id="html_e8d61d60ba9a71930d2d62410d1c2517" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Anderson Memorial Senior Citizen Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Both</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 2</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>828 S. Mesa St, San Pedro, CA 90731</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 548-7596</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Outdoor Drop-in: Contact</li><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_f22f0ed55756aad0532780562813a1f3.setContent(html_e8d61d60ba9a71930d2d62410d1c2517);
+            
+        
+
+        circle_marker_3977ecf6e9e6c27719dfa5f82a220958.bindPopup(popup_f22f0ed55756aad0532780562813a1f3)
+        ;
+
+        
+    
+    
+            circle_marker_3977ecf6e9e6c27719dfa5f82a220958.bindTooltip(
+                `<div>
+                     Anderson Memorial Senior Citizen Center (2 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_fbca2557f538531a422c222f2462a4f4 = L.marker(
+                [33.7362767, -118.2852631],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_c94f49e622384e07e210adae615f281d = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        2\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_fbca2557f538531a422c222f2462a4f4.setIcon(div_icon_c94f49e622384e07e210adae615f281d);
+            
+    
+            var circle_marker_036754609423b1e5733213a2e30f3e2e = L.circleMarker(
+                [34.0587797, -118.1274031],
+                {"bubblingMouseEvents": true, "color": "#FFE66D", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FFE66D", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_4d004c1bd64173dfa9441793d4ffae48 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_1a9b436c7823ce4d9d7e6ae7baade1fd = $(`<div id="html_1a9b436c7823ce4d9d7e6ae7baade1fd" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Barnes Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Both</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 6</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>350 S. McPherrin Ave, Monterey Park, CA 91754</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (626) 307-1388</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.montereypark.ca.gov/facilities/facility/details/Barnes-Park-3" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li><li>Indoor Gym: $50.00</li></ul></div></div>`)[0];
+                popup_4d004c1bd64173dfa9441793d4ffae48.setContent(html_1a9b436c7823ce4d9d7e6ae7baade1fd);
+            
+        
+
+        circle_marker_036754609423b1e5733213a2e30f3e2e.bindPopup(popup_4d004c1bd64173dfa9441793d4ffae48)
+        ;
+
+        
+    
+    
+            circle_marker_036754609423b1e5733213a2e30f3e2e.bindTooltip(
+                `<div>
+                     Barnes Park (6 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_9add1c73c12492cb34ec89f454c074b4 = L.marker(
+                [34.0587797, -118.1274031],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_6341b5cd1630bbb8e3e230e149be44c3 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        6\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_9add1c73c12492cb34ec89f454c074b4.setIcon(div_icon_6341b5cd1630bbb8e3e230e149be44c3);
+            
+    
+            var circle_marker_4ae42c20cf9c78ccbadbcfe8e0c66e16 = L.circleMarker(
+                [33.6281128, -117.8609907],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_42b48c6334d404540c039e024c39ce38 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_5da453676d770191a98c92352ef6a086 = $(`<div id="html_5da453676d770191a98c92352ef6a086" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Bonita Canyon Sports Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1641 Ford Rd, Newport Beach, CA 92660</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_42b48c6334d404540c039e024c39ce38.setContent(html_5da453676d770191a98c92352ef6a086);
+            
+        
+
+        circle_marker_4ae42c20cf9c78ccbadbcfe8e0c66e16.bindPopup(popup_42b48c6334d404540c039e024c39ce38)
+        ;
+
+        
+    
+    
+            circle_marker_4ae42c20cf9c78ccbadbcfe8e0c66e16.bindTooltip(
+                `<div>
+                     Bonita Canyon Sports Park (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_bb60524ff1487a265837c521b9ec3c11 = L.marker(
+                [33.6281128, -117.8609907],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_d4ad9dfc90bea67de1929e16d1141702 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_bb60524ff1487a265837c521b9ec3c11.setIcon(div_icon_d4ad9dfc90bea67de1929e16d1141702);
+            
+    
+            var circle_marker_96799d079a740bf7825a07b0252482e6 = L.circleMarker(
+                [34.0838508, -118.3774394],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_b1c6b6a3a99fd760c260c9dfc7230cce = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_52523b5bd6c503bdc36d7631a8a3a51f = $(`<div id="html_52523b5bd6c503bdc36d7631a8a3a51f" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Center Court - Rooftop Pickleball (Kimpton La Peer Hotel)</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>733 West Knoll Drive, West Hollywood, CA 90069</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (424) 303-5932</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.lapeerhotel.com/events/center-court/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Hotel Guest: Contact</li><li>Private Event: Contact</li></ul></div></div>`)[0];
+                popup_b1c6b6a3a99fd760c260c9dfc7230cce.setContent(html_52523b5bd6c503bdc36d7631a8a3a51f);
+            
+        
+
+        circle_marker_96799d079a740bf7825a07b0252482e6.bindPopup(popup_b1c6b6a3a99fd760c260c9dfc7230cce)
+        ;
+
+        
+    
+    
+            circle_marker_96799d079a740bf7825a07b0252482e6.bindTooltip(
+                `<div>
+                     Center Court - Rooftop Pickleball (Kimpton La Peer Hotel) (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_4231340690e8c85239d598d7913701ca = L.marker(
+                [34.0838508, -118.3774394],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_751b521b730ea3807d81a7c8f4faa785 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_4231340690e8c85239d598d7913701ca.setIcon(div_icon_751b521b730ea3807d81a7c8f4faa785);
+            
+    
+            var circle_marker_cd7700915080e1bee6489de2f3944974 = L.circleMarker(
+                [34.2610421, -118.6174117],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_8e6ff1f70efe4a0a46072b67fe5ec5e0 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_571753b9fdc9847a805ba59309c2018e = $(`<div id="html_571753b9fdc9847a805ba59309c2018e" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Chatsworth Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>22360 Devonshire St, Chatsworth, CA 91311</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 341-6595</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_8e6ff1f70efe4a0a46072b67fe5ec5e0.setContent(html_571753b9fdc9847a805ba59309c2018e);
+            
+        
+
+        circle_marker_cd7700915080e1bee6489de2f3944974.bindPopup(popup_8e6ff1f70efe4a0a46072b67fe5ec5e0)
+        ;
+
+        
+    
+    
+            circle_marker_cd7700915080e1bee6489de2f3944974.bindTooltip(
+                `<div>
+                     Chatsworth Recreation Center (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_e185dfdbbccf63e0082b0eb517476247 = L.marker(
+                [34.2610421, -118.6174117],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_e88c5d6b64b0fa37f89569349450a6bb = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_e185dfdbbccf63e0082b0eb517476247.setIcon(div_icon_e88c5d6b64b0fa37f89569349450a6bb);
+            
+    
+            var circle_marker_04a36f1065d12945249440cc1ecfd30d = L.circleMarker(
+                [34.0421012, -118.4037298],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_ebed0b9e81834f30117dae8f75bde408 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_6a24d3f341f4dd002d9280d7d24f59aa = $(`<div id="html_6a24d3f341f4dd002d9280d7d24f59aa" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Cheviot Hills Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1551 Motor Ave, Los Angeles, CA 90064</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 837-5186</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_ebed0b9e81834f30117dae8f75bde408.setContent(html_6a24d3f341f4dd002d9280d7d24f59aa);
+            
+        
+
+        circle_marker_04a36f1065d12945249440cc1ecfd30d.bindPopup(popup_ebed0b9e81834f30117dae8f75bde408)
+        ;
+
+        
+    
+    
+            circle_marker_04a36f1065d12945249440cc1ecfd30d.bindTooltip(
+                `<div>
+                     Cheviot Hills Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_65ea61a0bc98c0e01d5e640fc45e4944 = L.marker(
+                [34.0421012, -118.4037298],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_49f770e7cf2f76547dc74ad8490abb94 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_65ea61a0bc98c0e01d5e640fc45e4944.setIcon(div_icon_49f770e7cf2f76547dc74ad8490abb94);
+            
+    
+            var circle_marker_6343e83e64eef58ff392a87f4b62770c = L.circleMarker(
+                [33.6381771, -117.9232608],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_cd9f5edd0d9868c68d2d34b1dce314e9 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_574e055a2f80cffade28de3801911bb6 = $(`<div id="html_574e055a2f80cffade28de3801911bb6" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Costa Mesa Downtown Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 3</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>31860 Anaheim Ave, Costa Mesa, CA 92627</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_cd9f5edd0d9868c68d2d34b1dce314e9.setContent(html_574e055a2f80cffade28de3801911bb6);
+            
+        
+
+        circle_marker_6343e83e64eef58ff392a87f4b62770c.bindPopup(popup_cd9f5edd0d9868c68d2d34b1dce314e9)
+        ;
+
+        
+    
+    
+            circle_marker_6343e83e64eef58ff392a87f4b62770c.bindTooltip(
+                `<div>
+                     Costa Mesa Downtown Recreation Center (3 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_491a048cc8fe953160476267d3efc6d3 = L.marker(
+                [33.6381771, -117.9232608],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_6f7979023fb20a77dbd7e247c8461ebe = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        3\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_491a048cc8fe953160476267d3efc6d3.setIcon(div_icon_6f7979023fb20a77dbd7e247c8461ebe);
+            
+    
+            var circle_marker_e9f01822d91819cd53ad7e17d9765324 = L.circleMarker(
+                [34.1829425, -118.462912],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_2447f6f4f2ad744424cb2cb1534674f9 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_d45c336551085e51315d4b46ff8e6099 = $(`<div id="html_d45c336551085e51315d4b46ff8e6099" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Delano Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>15100 Erwin St, Van Nuys, CA 91411</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 756-8529</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_2447f6f4f2ad744424cb2cb1534674f9.setContent(html_d45c336551085e51315d4b46ff8e6099);
+            
+        
+
+        circle_marker_e9f01822d91819cd53ad7e17d9765324.bindPopup(popup_2447f6f4f2ad744424cb2cb1534674f9)
+        ;
+
+        
+    
+    
+            circle_marker_e9f01822d91819cd53ad7e17d9765324.bindTooltip(
+                `<div>
+                     Delano Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_811e06e4a640ae566f7d6aa650938f96 = L.marker(
+                [34.1829425, -118.462912],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_e95fcc2b56f11497c59957448edcac6d = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_811e06e4a640ae566f7d6aa650938f96.setIcon(div_icon_e95fcc2b56f11497c59957448edcac6d);
+            
+    
+            var circle_marker_e6357ee9441b5b96930000d48439ad91 = L.circleMarker(
+                [34.0989079, -118.2450777],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_397fabb1f227093bd91018df526650c0 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_f6ec294b9e9c49c4b017c8151ef8e0ba = $(`<div id="html_f6ec294b9e9c49c4b017c8151ef8e0ba" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Elysian Valley Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1811 Ripple St, Los Angeles, CA 90039</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (323) 666-5058</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_397fabb1f227093bd91018df526650c0.setContent(html_f6ec294b9e9c49c4b017c8151ef8e0ba);
+            
+        
+
+        circle_marker_e6357ee9441b5b96930000d48439ad91.bindPopup(popup_397fabb1f227093bd91018df526650c0)
+        ;
+
+        
+    
+    
+            circle_marker_e6357ee9441b5b96930000d48439ad91.bindTooltip(
+                `<div>
+                     Elysian Valley Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_788cc22212f1cf33fd744d69ea4535ed = L.marker(
+                [34.0989079, -118.2450777],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_aa496888cb967e2faec34919936980e5 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_788cc22212f1cf33fd744d69ea4535ed.setIcon(div_icon_aa496888cb967e2faec34919936980e5);
+            
+    
+            var circle_marker_9cee5b8a4a14da438d0af6c009abecb8 = L.circleMarker(
+                [34.1602726, -118.5011775],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_d504fc6487f4b2263ffa41bbbc68e9cd = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_fe8785778c10a0127a6080b0078cdea8 = $(`<div id="html_fe8785778c10a0127a6080b0078cdea8" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Encino Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>4935 Balboa Blvd, Encino, CA 91316</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 995-1690</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_d504fc6487f4b2263ffa41bbbc68e9cd.setContent(html_fe8785778c10a0127a6080b0078cdea8);
+            
+        
+
+        circle_marker_9cee5b8a4a14da438d0af6c009abecb8.bindPopup(popup_d504fc6487f4b2263ffa41bbbc68e9cd)
+        ;
+
+        
+    
+    
+            circle_marker_9cee5b8a4a14da438d0af6c009abecb8.bindTooltip(
+                `<div>
+                     Encino Recreation Center (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_e741fcd5fb761a5a0cefc0395f2c4b85 = L.marker(
+                [34.1602726, -118.5011775],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_6232bb6811aebf5437aa7820ebd59a48 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_e741fcd5fb761a5a0cefc0395f2c4b85.setIcon(div_icon_6232bb6811aebf5437aa7820ebd59a48);
+            
+    
+            var circle_marker_fb8bdd50f4daab85abffd02b3caa9b6c = L.circleMarker(
+                [34.0456883, -118.4495962],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_4247b131a86d416675aeb946e0dc8bf8 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_31d84078ff6cd0e735b940f49e3847fb = $(`<div id="html_31d84078ff6cd0e735b940f49e3847fb" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Felicia Mahood Multipurpose Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>11338 Santa Monica Blvd, Los Angeles, CA 90025</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 479-4119</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_4247b131a86d416675aeb946e0dc8bf8.setContent(html_31d84078ff6cd0e735b940f49e3847fb);
+            
+        
+
+        circle_marker_fb8bdd50f4daab85abffd02b3caa9b6c.bindPopup(popup_4247b131a86d416675aeb946e0dc8bf8)
+        ;
+
+        
+    
+    
+            circle_marker_fb8bdd50f4daab85abffd02b3caa9b6c.bindTooltip(
+                `<div>
+                     Felicia Mahood Multipurpose Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_3bb5a2d4b0f041a9a599d3ba25db06d1 = L.marker(
+                [34.0456883, -118.4495962],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_3f9a5ede3ed2dff174a7e6588fdd525d = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_3bb5a2d4b0f041a9a599d3ba25db06d1.setIcon(div_icon_3f9a5ede3ed2dff174a7e6588fdd525d);
+            
+    
+            var circle_marker_c63c04131b164920ec42c93cf4c69e37 = L.circleMarker(
+                [33.7251037, -117.953819],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_8f1dda6c9d9ffa1c176dd30d43f77109 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_462072527fbfd9dbc60f833d6d8d7fc1 = $(`<div id="html_462072527fbfd9dbc60f833d6d8d7fc1" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Fountain Valley Tennis Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>16400 Brookhurst Street, Fountain Valley, CA 92708</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_8f1dda6c9d9ffa1c176dd30d43f77109.setContent(html_462072527fbfd9dbc60f833d6d8d7fc1);
+            
+        
+
+        circle_marker_c63c04131b164920ec42c93cf4c69e37.bindPopup(popup_8f1dda6c9d9ffa1c176dd30d43f77109)
+        ;
+
+        
+    
+    
+            circle_marker_c63c04131b164920ec42c93cf4c69e37.bindTooltip(
+                `<div>
+                     Fountain Valley Tennis Center (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_ce8809e1119060c5ff7eae2aab79546c = L.marker(
+                [33.7251037, -117.953819],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_aee3706aa1075c54104a1514f3e2438f = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_ce8809e1119060c5ff7eae2aab79546c.setIcon(div_icon_aee3706aa1075c54104a1514f3e2438f);
+            
+    
+            var circle_marker_3ab6e24cdf792a13d83fb5896f58e042 = L.circleMarker(
+                [34.1157513, -118.2339986],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_1461c79fbe922651f7ee20a2dfb4d93a = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_d18d34fd190cf1361b28c02cf2eaa866 = $(`<div id="html_d18d34fd190cf1361b28c02cf2eaa866" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Glassell Park Senior Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>3650 Verdugo Rd, Los Angeles, CA 90065</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (323) 550-8809</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_1461c79fbe922651f7ee20a2dfb4d93a.setContent(html_d18d34fd190cf1361b28c02cf2eaa866);
+            
+        
+
+        circle_marker_3ab6e24cdf792a13d83fb5896f58e042.bindPopup(popup_1461c79fbe922651f7ee20a2dfb4d93a)
+        ;
+
+        
+    
+    
+            circle_marker_3ab6e24cdf792a13d83fb5896f58e042.bindTooltip(
+                `<div>
+                     Glassell Park Senior Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_f692d744e2dce35192968cdccebeb258 = L.marker(
+                [34.1157513, -118.2339986],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_eee8041507fd3057bf4f3403460149b1 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_f692d744e2dce35192968cdccebeb258.setIcon(div_icon_eee8041507fd3057bf4f3403460149b1);
+            
+    
+            var circle_marker_97b96f84e9123bebe9c2a3a283596ed8 = L.circleMarker(
+                [34.264795, -118.5046681],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_b626fa25500aa50390274ce46665944d = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_225ed45efa409af92307f2b61290b5f6 = $(`<div id="html_225ed45efa409af92307f2b61290b5f6" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Granada Hills Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>16730 Chatsworth St, Granada Hills, CA 91344</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 363-3556</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_b626fa25500aa50390274ce46665944d.setContent(html_225ed45efa409af92307f2b61290b5f6);
+            
+        
+
+        circle_marker_97b96f84e9123bebe9c2a3a283596ed8.bindPopup(popup_b626fa25500aa50390274ce46665944d)
+        ;
+
+        
+    
+    
+            circle_marker_97b96f84e9123bebe9c2a3a283596ed8.bindTooltip(
+                `<div>
+                     Granada Hills Recreation Center (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_7247042066d33c5920c0f26081125b71 = L.marker(
+                [34.264795, -118.5046681],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_018a504384f1257a2c4745923becdf81 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_7247042066d33c5920c0f26081125b71.setIcon(div_icon_018a504384f1257a2c4745923becdf81);
+            
+    
+            var circle_marker_6389282b6ff9764f46f9d763906cf140 = L.circleMarker(
+                [34.1145617, -118.1844312],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_620ed1ffb7789d63c91a55d7498ab924 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_1dce9b8a26d9ed3f041507935bcc8e16 = $(`<div id="html_1dce9b8a26d9ed3f041507935bcc8e16" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Highland Park Adult Senior Citizen Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>6152 N. Figueroa St, Los Angeles, CA 90042</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (323) 256-6867</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_620ed1ffb7789d63c91a55d7498ab924.setContent(html_1dce9b8a26d9ed3f041507935bcc8e16);
+            
+        
+
+        circle_marker_6389282b6ff9764f46f9d763906cf140.bindPopup(popup_620ed1ffb7789d63c91a55d7498ab924)
+        ;
+
+        
+    
+    
+            circle_marker_6389282b6ff9764f46f9d763906cf140.bindTooltip(
+                `<div>
+                     Highland Park Adult Senior Citizen Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_b11e37774826b79a15c55848f8d3511b = L.marker(
+                [34.1145617, -118.1844312],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_d55e2c501cca0e0a77b962e5f478896c = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_b11e37774826b79a15c55848f8d3511b.setIcon(div_icon_d55e2c501cca0e0a77b962e5f478896c);
+            
+    
+            var circle_marker_9047f05349b614aaa4b0ec16663f816f = L.circleMarker(
+                [33.9833307, -118.3032008],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_63b737ca0308302b5f85a02b6bff15c8 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_9a8bf2d9396af36b8864c975bc725e16 = $(`<div id="html_9a8bf2d9396af36b8864c975bc725e16" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Jackie Tatum Harvard Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1535 West 62nd St, Los Angeles, CA 90047</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (323) 778-2579</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_63b737ca0308302b5f85a02b6bff15c8.setContent(html_9a8bf2d9396af36b8864c975bc725e16);
+            
+        
+
+        circle_marker_9047f05349b614aaa4b0ec16663f816f.bindPopup(popup_63b737ca0308302b5f85a02b6bff15c8)
+        ;
+
+        
+    
+    
+            circle_marker_9047f05349b614aaa4b0ec16663f816f.bindTooltip(
+                `<div>
+                     Jackie Tatum Harvard Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_8001b83e9fdcfb27f76d9bf6ec3cce42 = L.marker(
+                [33.9833307, -118.3032008],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_df415a623401562b9007d8205c09505b = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_8001b83e9fdcfb27f76d9bf6ec3cce42.setIcon(div_icon_df415a623401562b9007d8205c09505b);
+            
+    
+            var circle_marker_38c8371402a31a589f93691e34e95717 = L.circleMarker(
+                [34.2833527, -118.5830306],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_a7eb5981822f598cbf7c30b12eaf0301 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_e5059ee045070a55628014dac312af90 = $(`<div id="html_e5059ee045070a55628014dac312af90" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Jane and Bert Boeckmann Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>11930 Mason Ave, Porter Ranch, CA 91326</p>             <p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_a7eb5981822f598cbf7c30b12eaf0301.setContent(html_e5059ee045070a55628014dac312af90);
+            
+        
+
+        circle_marker_38c8371402a31a589f93691e34e95717.bindPopup(popup_a7eb5981822f598cbf7c30b12eaf0301)
+        ;
+
+        
+    
+    
+            circle_marker_38c8371402a31a589f93691e34e95717.bindTooltip(
+                `<div>
+                     Jane and Bert Boeckmann Park (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_55922a7c8b74a3bded4f65eaa647791f = L.marker(
+                [34.2833527, -118.5830306],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_54fda1b8b5c0f0ba5a20ef8f145341aa = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_55922a7c8b74a3bded4f65eaa647791f.setIcon(div_icon_54fda1b8b5c0f0ba5a20ef8f145341aa);
+            
+    
+            var circle_marker_9ab171183efe42029b9a5d2906193cf9 = L.circleMarker(
+                [34.0621906, -118.3762099],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_7837e22358f7b8ca34e2d2cb164685a4 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_b37a2c9ca5d117ae5fa136c19947803b = $(`<div id="html_b37a2c9ca5d117ae5fa136c19947803b" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">La Cienega Tennis Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 3</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>325 S La Cienega Blvd, Beverly Hills, CA 90211</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 285-6825</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://beverlyhillstennis.com/pickleball/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Court Rental: Contact</li></ul></div></div>`)[0];
+                popup_7837e22358f7b8ca34e2d2cb164685a4.setContent(html_b37a2c9ca5d117ae5fa136c19947803b);
+            
+        
+
+        circle_marker_9ab171183efe42029b9a5d2906193cf9.bindPopup(popup_7837e22358f7b8ca34e2d2cb164685a4)
+        ;
+
+        
+    
+    
+            circle_marker_9ab171183efe42029b9a5d2906193cf9.bindTooltip(
+                `<div>
+                     La Cienega Tennis Center (3 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_a363e617deaa54758b61fe7dbf962c38 = L.marker(
+                [34.0621906, -118.3762099],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_6caf11c59cbcad3f65dd7de704367b5f = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        3\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_a363e617deaa54758b61fe7dbf962c38.setIcon(div_icon_6caf11c59cbcad3f65dd7de704367b5f);
+            
+    
+            var circle_marker_70bb9901bc92ab58679e57668ef28fc9 = L.circleMarker(
+                [33.5527225, -117.7097715],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_776cf843cb0a5cbb2ffa84a9bf9daf4e = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_e12bf88d123eb2d97987e9cf2924dbee = $(`<div id="html_e12bf88d123eb2d97987e9cf2924dbee" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Laguna Niguel Regional Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 8</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>28241 La Paz Road, Laguna Niguel, CA 92677</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_776cf843cb0a5cbb2ffa84a9bf9daf4e.setContent(html_e12bf88d123eb2d97987e9cf2924dbee);
+            
+        
+
+        circle_marker_70bb9901bc92ab58679e57668ef28fc9.bindPopup(popup_776cf843cb0a5cbb2ffa84a9bf9daf4e)
+        ;
+
+        
+    
+    
+            circle_marker_70bb9901bc92ab58679e57668ef28fc9.bindTooltip(
+                `<div>
+                     Laguna Niguel Regional Park (8 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_3be751df20fa1116ac80d243174417ca = L.marker(
+                [33.5527225, -117.7097715],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_ed0b7673e79e7d6d4f6989cf6d35d8b4 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        8\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_3be751df20fa1116ac80d243174417ca.setIcon(div_icon_ed0b7673e79e7d6d4f6989cf6d35d8b4);
+            
+    
+            var circle_marker_d58ac7745faef4abd61a7c7e296c0fa8 = L.circleMarker(
+                [34.0663284, -118.1988703],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_f22f5c48f41bad494f00e80bcf80ec5a = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_eaac03e94f87e266e672ad821874af51 = $(`<div id="html_eaac03e94f87e266e672ad821874af51" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Lincoln Park Senior Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>3501 Valley Blvd, Los Angeles, CA 90031</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (213) 847-1726</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_f22f5c48f41bad494f00e80bcf80ec5a.setContent(html_eaac03e94f87e266e672ad821874af51);
+            
+        
+
+        circle_marker_d58ac7745faef4abd61a7c7e296c0fa8.bindPopup(popup_f22f5c48f41bad494f00e80bcf80ec5a)
+        ;
+
+        
+    
+    
+            circle_marker_d58ac7745faef4abd61a7c7e296c0fa8.bindTooltip(
+                `<div>
+                     Lincoln Park Senior Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_c40a0615694867fc584d9a27fb000ac8 = L.marker(
+                [34.0663284, -118.1988703],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_0c83b4372878c674588fc51fd551b5cc = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_c40a0615694867fc584d9a27fb000ac8.setIcon(div_icon_0c83b4372878c674588fc51fd551b5cc);
+            
+    
+            var circle_marker_751ce6a534c4aeaa7de0d6966f6a511f = L.circleMarker(
+                [34.019769, -118.480427],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_fb17df9c3448bac50fc27b0deb36a5f9 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_4d970f889833483da0d11fb6adaa8a47 = $(`<div id="html_4d970f889833483da0d11fb6adaa8a47" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Memorial Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 16</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1401 Olympic Blvd, Santa Monica, CA 90404</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 458-8237</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.santamonica.gov/programs/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in Resident: $3.00</li><li>Drop-in Non-Resident: $5.00</li></ul></div></div>`)[0];
+                popup_fb17df9c3448bac50fc27b0deb36a5f9.setContent(html_4d970f889833483da0d11fb6adaa8a47);
+            
+        
+
+        circle_marker_751ce6a534c4aeaa7de0d6966f6a511f.bindPopup(popup_fb17df9c3448bac50fc27b0deb36a5f9)
+        ;
+
+        
+    
+    
+            circle_marker_751ce6a534c4aeaa7de0d6966f6a511f.bindTooltip(
+                `<div>
+                     Memorial Park (16 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_b0604e89a0c9cf75eeee1282430190a3 = L.marker(
+                [34.019769, -118.480427],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_339831295b9b8548581d83ce3d482ea4 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        16\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_b0604e89a0c9cf75eeee1282430190a3.setIcon(div_icon_339831295b9b8548581d83ce3d482ea4);
+            
+    
+            var circle_marker_04ed97cbea64168d91d1b01ea1e4b622 = L.circleMarker(
+                [34.095798, -118.2034022],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_26508a0c90889cd4dfba1aad19a2a3bd = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_20dfa8d7294b066a9ba8977bff3fa3af = $(`<div id="html_20dfa8d7294b066a9ba8977bff3fa3af" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Montecito Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 2</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>4545 Homer St, Los Angeles, CA 90031</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (213) 485-5148</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_26508a0c90889cd4dfba1aad19a2a3bd.setContent(html_20dfa8d7294b066a9ba8977bff3fa3af);
+            
+        
+
+        circle_marker_04ed97cbea64168d91d1b01ea1e4b622.bindPopup(popup_26508a0c90889cd4dfba1aad19a2a3bd)
+        ;
+
+        
+    
+    
+            circle_marker_04ed97cbea64168d91d1b01ea1e4b622.bindTooltip(
+                `<div>
+                     Montecito Recreation Center (2 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_823fa09d415f38d402d7ee9226c120b2 = L.marker(
+                [34.095798, -118.2034022],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_219fd17fa860a7882e863019a9305eff = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        2\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_823fa09d415f38d402d7ee9226c120b2.setIcon(div_icon_219fd17fa860a7882e863019a9305eff);
+            
+    
+            var circle_marker_19c158b9ebbd2de7bbb39e37f3106aa7 = L.circleMarker(
+                [34.06609, -118.3441164],
+                {"bubblingMouseEvents": true, "color": "#FFE66D", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FFE66D", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_3497fe92a5bdbf3ed678d30b1f5ddbf6 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_f546bfa5f09cbbc330f10857c3f9b237 = $(`<div id="html_f546bfa5f09cbbc330f10857c3f9b237" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">PIKL Los Angeles</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Both</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 12</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>439 S La Brea Ave, Los Angeles, CA 90036</p>             <p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://piklla.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Ernie Insider Member: $169.00</li><li>ATP Master Member: $259.00</li><li>Drop-In: $30.00</li></ul></div></div>`)[0];
+                popup_3497fe92a5bdbf3ed678d30b1f5ddbf6.setContent(html_f546bfa5f09cbbc330f10857c3f9b237);
+            
+        
+
+        circle_marker_19c158b9ebbd2de7bbb39e37f3106aa7.bindPopup(popup_3497fe92a5bdbf3ed678d30b1f5ddbf6)
+        ;
+
+        
+    
+    
+            circle_marker_19c158b9ebbd2de7bbb39e37f3106aa7.bindTooltip(
+                `<div>
+                     PIKL Los Angeles (12 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_3d929b85a79e947358fc84012d3245c9 = L.marker(
+                [34.06609, -118.3441164],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_0e62f409dc328e555b600d5d78c27ca5 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        12\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_3d929b85a79e947358fc84012d3245c9.setIcon(div_icon_0e62f409dc328e555b600d5d78c27ca5);
+            
+    
+            var circle_marker_76988a21d09b1bb84e9d78a3aab05886 = L.circleMarker(
+                [34.0069509, -118.4540464],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_a4905df9d17fc2f1ec1ab1ff606b9867 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_2c3c946c36ae51894a3615ba4268f977 = $(`<div id="html_2c3c946c36ae51894a3615ba4268f977" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Penmar Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 8</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1341 Lake St, Venice, CA 90291</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 396-8735</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_a4905df9d17fc2f1ec1ab1ff606b9867.setContent(html_2c3c946c36ae51894a3615ba4268f977);
+            
+        
+
+        circle_marker_76988a21d09b1bb84e9d78a3aab05886.bindPopup(popup_a4905df9d17fc2f1ec1ab1ff606b9867)
+        ;
+
+        
+    
+    
+            circle_marker_76988a21d09b1bb84e9d78a3aab05886.bindTooltip(
+                `<div>
+                     Penmar Recreation Center (8 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_fd06ddc9bdbbe2fb65dc0a33403e1549 = L.marker(
+                [34.0069509, -118.4540464],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_7e3e81b2d809ba9ddab9a73a8aa92846 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        8\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_fd06ddc9bdbbe2fb65dc0a33403e1549.setIcon(div_icon_7e3e81b2d809ba9ddab9a73a8aa92846);
+            
+    
+            var circle_marker_5aeb90935b78b8a4faaab3bdaec4c540 = L.circleMarker(
+                [33.666904, -117.6786957],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_c6b25cec437dbc018976ceb020dddb05 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_daa53155275437304d376532d9e3b2ab = $(`<div id="html_daa53155275437304d376532d9e3b2ab" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Pickleball Haven</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 14</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>25871 Atlantic Ocean Drive, Lake Forest, CA 92630</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (949) 414-5090</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://pb-haven.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Unlimited Membership: $199.00</li><li>Half-Day Membership: $129.00</li><li>Community Service/60+: $150.00</li></ul></div></div>`)[0];
+                popup_c6b25cec437dbc018976ceb020dddb05.setContent(html_daa53155275437304d376532d9e3b2ab);
+            
+        
+
+        circle_marker_5aeb90935b78b8a4faaab3bdaec4c540.bindPopup(popup_c6b25cec437dbc018976ceb020dddb05)
+        ;
+
+        
+    
+    
+            circle_marker_5aeb90935b78b8a4faaab3bdaec4c540.bindTooltip(
+                `<div>
+                     Pickleball Haven (14 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_ca0d8e421ab59622585f1609ff419ba6 = L.marker(
+                [33.666904, -117.6786957],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_720286cdaab10383c90d71e2875e8a2c = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        14\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_ca0d8e421ab59622585f1609ff419ba6.setIcon(div_icon_720286cdaab10383c90d71e2875e8a2c);
+            
+    
+            var circle_marker_d34bc477657ccfaef80c82679098996c = L.circleMarker(
+                [33.696664, -117.701102],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_e727dfda99f885ad922ee23c668738b4 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_c62474f4e3d0c45fef86f1cb784e0221 = $(`<div id="html_c62474f4e3d0c45fef86f1cb784e0221" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Portola Springs Community Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 6</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>900 Tomato Springs, Irvine, CA 92620</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_e727dfda99f885ad922ee23c668738b4.setContent(html_c62474f4e3d0c45fef86f1cb784e0221);
+            
+        
+
+        circle_marker_d34bc477657ccfaef80c82679098996c.bindPopup(popup_e727dfda99f885ad922ee23c668738b4)
+        ;
+
+        
+    
+    
+            circle_marker_d34bc477657ccfaef80c82679098996c.bindTooltip(
+                `<div>
+                     Portola Springs Community Park (6 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_d51bfdc8961cd65f7d869d2d9d93f655 = L.marker(
+                [33.696664, -117.701102],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_df784c6ff9e58cb85d82ba59f7eaed86 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        6\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_d51bfdc8961cd65f7d869d2d9d93f655.setIcon(div_icon_df784c6ff9e58cb85d82ba59f7eaed86);
+            
+    
+            var circle_marker_6c06c2d0241ab6ea2dd973dfe3f1e0b4 = L.circleMarker(
+                [33.8545683, -118.2791967],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_e706bdc80a6477a6250c15c77914affe = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_9fcc1146b239c960dd49a854093fba8c = $(`<div id="html_9fcc1146b239c960dd49a854093fba8c" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">PowerPlay Pickleball</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 9</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>19401 S. Main Street, Carson, CA 90248</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> 310-819-8399</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://powerplaypb.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Regular Member: $169.00</li><li>Annual Member: Contact</li><li>60+ Member: $99.00</li></ul></div></div>`)[0];
+                popup_e706bdc80a6477a6250c15c77914affe.setContent(html_9fcc1146b239c960dd49a854093fba8c);
+            
+        
+
+        circle_marker_6c06c2d0241ab6ea2dd973dfe3f1e0b4.bindPopup(popup_e706bdc80a6477a6250c15c77914affe)
+        ;
+
+        
+    
+    
+            circle_marker_6c06c2d0241ab6ea2dd973dfe3f1e0b4.bindTooltip(
+                `<div>
+                     PowerPlay Pickleball (9 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_66224793251d1eec21c2619cf8fde7ef = L.marker(
+                [33.8545683, -118.2791967],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_a5362f8a7791e67f7ae4d28eb47215af = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        9\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_66224793251d1eec21c2619cf8fde7ef.setIcon(div_icon_a5362f8a7791e67f7ae4d28eb47215af);
+            
+    
+            var circle_marker_d5da45c252894800dc342ad2e3d74e2e = L.circleMarker(
+                [34.0496947, -118.38454],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_7cdf82ac1a1fd1a844a28623e4e961ba = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_ddd4962d1cac71ab24be8c34cd077c35 = $(`<div id="html_ddd4962d1cac71ab24be8c34cd077c35" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Robertson Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1641 Preuss Rd, Los Angeles, CA 90035</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 278-5383</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_7cdf82ac1a1fd1a844a28623e4e961ba.setContent(html_ddd4962d1cac71ab24be8c34cd077c35);
+            
+        
+
+        circle_marker_d5da45c252894800dc342ad2e3d74e2e.bindPopup(popup_7cdf82ac1a1fd1a844a28623e4e961ba)
+        ;
+
+        
+    
+    
+            circle_marker_d5da45c252894800dc342ad2e3d74e2e.bindTooltip(
+                `<div>
+                     Robertson Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_40bfc951b98e08bfd6fd38473b27bfb2 = L.marker(
+                [34.0496947, -118.38454],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_7e60c9521adbfe2bb9249cf98dc70072 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_40bfc951b98e08bfd6fd38473b27bfb2.setIcon(div_icon_7e60c9521adbfe2bb9249cf98dc70072);
+            
+    
+            var circle_marker_b67d029554b1320a4199a1473235f710 = L.circleMarker(
+                [34.0568674, -118.4060185],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_8112a62d62b78b5fb1e957d0f7a70a8a = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_bb3e3dbf115025894d000a8e3bbf81c5 = $(`<div id="html_bb3e3dbf115025894d000a8e3bbf81c5" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Roxbury Park Tennis Courts</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>487 South Roxbury Drive, Beverly Hills, CA 90212</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 285-6829</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.beverlyhills.org/534/Pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Court Rental: Contact</li></ul></div></div>`)[0];
+                popup_8112a62d62b78b5fb1e957d0f7a70a8a.setContent(html_bb3e3dbf115025894d000a8e3bbf81c5);
+            
+        
+
+        circle_marker_b67d029554b1320a4199a1473235f710.bindPopup(popup_8112a62d62b78b5fb1e957d0f7a70a8a)
+        ;
+
+        
+    
+    
+            circle_marker_b67d029554b1320a4199a1473235f710.bindTooltip(
+                `<div>
+                     Roxbury Park Tennis Courts (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_89e7c67b87e46c6b6fef7e4c9caf06ad = L.marker(
+                [34.0568674, -118.4060185],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_f9cf88d3fb14c905a6c6a7f241555d5a = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_89e7c67b87e46c6b6fef7e4c9caf06ad.setIcon(div_icon_f9cf88d3fb14c905a6c6a7f241555d5a);
+            
+    
+            var circle_marker_17d9c4aa8a543a03907e540c3ce97306 = L.circleMarker(
+                [33.7768601, -118.070797],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_b9932c460e2188c548eca0fcfb57dde3 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_200b5c8fe7d48ff17933401697c0deca = $(`<div id="html_200b5c8fe7d48ff17933401697c0deca" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Seal Beach Tennis Club</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 9</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>3900 Lampson Ave, Seal Beach, CA 90740</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Membership/Fee: Contact</li></ul></div></div>`)[0];
+                popup_b9932c460e2188c548eca0fcfb57dde3.setContent(html_200b5c8fe7d48ff17933401697c0deca);
+            
+        
+
+        circle_marker_17d9c4aa8a543a03907e540c3ce97306.bindPopup(popup_b9932c460e2188c548eca0fcfb57dde3)
+        ;
+
+        
+    
+    
+            circle_marker_17d9c4aa8a543a03907e540c3ce97306.bindTooltip(
+                `<div>
+                     Seal Beach Tennis Club (9 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_5e7737685f8107fc81f41109217ffe27 = L.marker(
+                [33.7768601, -118.070797],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_eb99941807101918c63965bf6f2cbdee = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        9\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_5e7737685f8107fc81f41109217ffe27.setIcon(div_icon_eb99941807101918c63965bf6f2cbdee);
+            
+    
+            var circle_marker_4e56ccdfc90a5f5e4a7a807f43fed39a = L.circleMarker(
+                [34.132226, -118.261681],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_8a3d3963ebd100073ca3356c408abcdb = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_d84c9049b11a507b84d902145e62107d = $(`<div id="html_d84c9049b11a507b84d902145e62107d" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Smash Dink Pickleball</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 6</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>4400 San Fernando Rd, Glendale, CA 91204</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (747) 307-3426</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.smashdinkpickleball.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Morning Open Play: $12.00</li><li>Evening Open Play: $18.00</li><li>Court Rental: $50.00</li></ul></div></div>`)[0];
+                popup_8a3d3963ebd100073ca3356c408abcdb.setContent(html_d84c9049b11a507b84d902145e62107d);
+            
+        
+
+        circle_marker_4e56ccdfc90a5f5e4a7a807f43fed39a.bindPopup(popup_8a3d3963ebd100073ca3356c408abcdb)
+        ;
+
+        
+    
+    
+            circle_marker_4e56ccdfc90a5f5e4a7a807f43fed39a.bindTooltip(
+                `<div>
+                     Smash Dink Pickleball (6 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_a0a4c973bf3e27fb53eb02c8431b0ee1 = L.marker(
+                [34.132226, -118.261681],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_ae93c8c533ed8e390d69e7e299073488 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        6\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_a0a4c973bf3e27fb53eb02c8431b0ee1.setIcon(div_icon_ae93c8c533ed8e390d69e7e299073488);
+            
+    
+            var circle_marker_d45ca95e10edb68444a3c1ddbd1f5765 = L.circleMarker(
+                [33.9125188, -118.3114742],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_1e25b39ec48eac9c4b679f3c6a37beb3 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_b1fe3df9c7bd0831a41234cbe6d7d6d7 = $(`<div id="html_b1fe3df9c7bd0831a41234cbe6d7d6d7" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">St Andrews Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>8701 St Andrews Place, Los Angeles, CA 90047</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (213) 485-1751</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_1e25b39ec48eac9c4b679f3c6a37beb3.setContent(html_b1fe3df9c7bd0831a41234cbe6d7d6d7);
+            
+        
+
+        circle_marker_d45ca95e10edb68444a3c1ddbd1f5765.bindPopup(popup_1e25b39ec48eac9c4b679f3c6a37beb3)
+        ;
+
+        
+    
+    
+            circle_marker_d45ca95e10edb68444a3c1ddbd1f5765.bindTooltip(
+                `<div>
+                     St Andrews Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_d82f2d089a5e19ea92ce744ed7e195fd = L.marker(
+                [33.9125188, -118.3114742],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_4e6837cc7f075d1131ae339250eff985 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_d82f2d089a5e19ea92ce744ed7e195fd.setIcon(div_icon_4e6837cc7f075d1131ae339250eff985);
+            
+    
+            var circle_marker_21e5a7635c78b387cd8eeb58ee99415f = L.circleMarker(
+                [34.038829, -118.4533616],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_7c9f754a5e88f53ffc6fe69f7214b69e = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_892bbced42ee98ab06420189d3fed9dc = $(`<div id="html_892bbced42ee98ab06420189d3fed9dc" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Stoner Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1835 Stoner Ave, Los Angeles, CA 90025</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 479-7200</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_7c9f754a5e88f53ffc6fe69f7214b69e.setContent(html_892bbced42ee98ab06420189d3fed9dc);
+            
+        
+
+        circle_marker_21e5a7635c78b387cd8eeb58ee99415f.bindPopup(popup_7c9f754a5e88f53ffc6fe69f7214b69e)
+        ;
+
+        
+    
+    
+            circle_marker_21e5a7635c78b387cd8eeb58ee99415f.bindTooltip(
+                `<div>
+                     Stoner Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_f468d3b02805ed07365c579c2430f7f6 = L.marker(
+                [34.038829, -118.4533616],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_3dca4a4ff304d1d8dc067bb8622a194d = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_f468d3b02805ed07365c579c2430f7f6.setIcon(div_icon_3dca4a4ff304d1d8dc067bb8622a194d);
+            
+    
+            var circle_marker_b0a634b29f6fd4f71674dea84ca38ee2 = L.circleMarker(
+                [34.2581392, -118.3017066],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_3b625677cf762427cd326a47db1f0f71 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_dd1da527568a124d960b0c73a98f74a0 = $(`<div id="html_dd1da527568a124d960b0c73a98f74a0" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Sunland Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>8651 Foothill Blvd, Sunland, CA 91040</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 352-5282</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_3b625677cf762427cd326a47db1f0f71.setContent(html_dd1da527568a124d960b0c73a98f74a0);
+            
+        
+
+        circle_marker_b0a634b29f6fd4f71674dea84ca38ee2.bindPopup(popup_3b625677cf762427cd326a47db1f0f71)
+        ;
+
+        
+    
+    
+            circle_marker_b0a634b29f6fd4f71674dea84ca38ee2.bindTooltip(
+                `<div>
+                     Sunland Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_94bf4190480d3761f348f40a56d2ab94 = L.marker(
+                [34.2581392, -118.3017066],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_f681c1158baf20318644f7a516dedc7b = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_94bf4190480d3761f348f40a56d2ab94.setIcon(div_icon_f681c1158baf20318644f7a516dedc7b);
+            
+    
+            var circle_marker_d0c7da303c1d87b3edcf2d1ce490e1b8 = L.circleMarker(
+                [34.1746682, -118.5502083],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_4de49238813e24c51e1f73e3751dde20 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_523cb669bc9a193f4a706e61eba481a1 = $(`<div id="html_523cb669bc9a193f4a706e61eba481a1" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Tarzana Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>5655 Vanalden Ave, Tarzana, CA 91356</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 343-4721</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_4de49238813e24c51e1f73e3751dde20.setContent(html_523cb669bc9a193f4a706e61eba481a1);
+            
+        
+
+        circle_marker_d0c7da303c1d87b3edcf2d1ce490e1b8.bindPopup(popup_4de49238813e24c51e1f73e3751dde20)
+        ;
+
+        
+    
+    
+            circle_marker_d0c7da303c1d87b3edcf2d1ce490e1b8.bindTooltip(
+                `<div>
+                     Tarzana Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_660620f3580cd84848d5abb346d85bc1 = L.marker(
+                [34.1746682, -118.5502083],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_05a6e11d8850073fd42e75d568b8ded0 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_660620f3580cd84848d5abb346d85bc1.setIcon(div_icon_05a6e11d8850073fd42e75d568b8ded0);
+            
+    
+            var circle_marker_0b8b2e1487a6912a11044f9ea73bb292 = L.circleMarker(
+                [33.824629, -117.996829],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_d4d7a231b48154e8f59e59d950ab8329 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_6d8e0851eaae5de51bd162c0c7c75ad3 = $(`<div id="html_6d8e0851eaae5de51bd162c0c7c75ad3" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Twila Reid Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 3</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>3100 W Orange Ave, Anaheim, CA 92804</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_d4d7a231b48154e8f59e59d950ab8329.setContent(html_6d8e0851eaae5de51bd162c0c7c75ad3);
+            
+        
+
+        circle_marker_0b8b2e1487a6912a11044f9ea73bb292.bindPopup(popup_d4d7a231b48154e8f59e59d950ab8329)
+        ;
+
+        
+    
+    
+            circle_marker_0b8b2e1487a6912a11044f9ea73bb292.bindTooltip(
+                `<div>
+                     Twila Reid Park (3 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_f2931b505f8775e946c6a5584477265d = L.marker(
+                [33.824629, -117.996829],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_8339d2f1f7668c565b469cadbe183898 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        3\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_f2931b505f8775e946c6a5584477265d.setIcon(div_icon_8339d2f1f7668c565b469cadbe183898);
+            
+    
+            var circle_marker_21050924773e3c764de63cf01c6c046c = L.circleMarker(
+                [34.159501, -118.442297],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_581bccfaa7c561a79395711477dd3bc0 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_aec9fa24c96fedb3b881024d7241be3b = $(`<div id="html_aec9fa24c96fedb3b881024d7241be3b" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Van Nuys Sherman Oaks Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 1</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>14201 Huston St, Sherman Oaks, CA 91423</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 783-5122</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_581bccfaa7c561a79395711477dd3bc0.setContent(html_aec9fa24c96fedb3b881024d7241be3b);
+            
+        
+
+        circle_marker_21050924773e3c764de63cf01c6c046c.bindPopup(popup_581bccfaa7c561a79395711477dd3bc0)
+        ;
+
+        
+    
+    
+            circle_marker_21050924773e3c764de63cf01c6c046c.bindTooltip(
+                `<div>
+                     Van Nuys Sherman Oaks Recreation Center (1 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_f1657f3526691fb7b0664a11446068b5 = L.marker(
+                [34.159501, -118.442297],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_588db918b04e6d2a92c232c68a75eb5b = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        1\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_f1657f3526691fb7b0664a11446068b5.setIcon(div_icon_588db918b04e6d2a92c232c68a75eb5b);
+            
+    
+            var circle_marker_781c673999f390969f6d58412237e8e9 = L.circleMarker(
+                [33.9894844, -118.475924],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_22bb03be3b88622d89bdbd0c24995c60 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_132c3f6adc821acf5d24fcb5d48d0f88 = $(`<div id="html_132c3f6adc821acf5d24fcb5d48d0f88" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Venice Beach Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 3</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1800 Ocean Front Walk, Venice, CA 90291</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (310) 396-6764</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_22bb03be3b88622d89bdbd0c24995c60.setContent(html_132c3f6adc821acf5d24fcb5d48d0f88);
+            
+        
+
+        circle_marker_781c673999f390969f6d58412237e8e9.bindPopup(popup_22bb03be3b88622d89bdbd0c24995c60)
+        ;
+
+        
+    
+    
+            circle_marker_781c673999f390969f6d58412237e8e9.bindTooltip(
+                `<div>
+                     Venice Beach Recreation Center (3 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_8600319df20e93fc4baf038496223de8 = L.marker(
+                [33.9894844, -118.475924],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_9cfa6e20cb264a8b82a4afff2fd17b8e = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        3\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_8600319df20e93fc4baf038496223de8.setIcon(div_icon_9cfa6e20cb264a8b82a4afff2fd17b8e);
+            
+    
+            var circle_marker_a34e538d6d17a84c5f6cc243ac3b2e51 = L.circleMarker(
+                [33.7246623, -117.8287445],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_2f9817bc02cdeae456881990d235562d = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_1b4d32128df3481b58ea9772f34387d2 = $(`<div id="html_1b4d32128df3481b58ea9772f34387d2" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Veterans Sports Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 8</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1302 Service Rd, Tustin, CA 92780</p>             <p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.tustinca.org/1140/Pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Court Fee: Contact</li></ul></div></div>`)[0];
+                popup_2f9817bc02cdeae456881990d235562d.setContent(html_1b4d32128df3481b58ea9772f34387d2);
+            
+        
+
+        circle_marker_a34e538d6d17a84c5f6cc243ac3b2e51.bindPopup(popup_2f9817bc02cdeae456881990d235562d)
+        ;
+
+        
+    
+    
+            circle_marker_a34e538d6d17a84c5f6cc243ac3b2e51.bindTooltip(
+                `<div>
+                     Veterans Sports Park (8 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_ba987a1907a39d5fefd0b6b435f89c83 = L.marker(
+                [33.7246623, -117.8287445],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_f9d0eb5d68a00b2a2f193f7851ce918f = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        8\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_ba987a1907a39d5fefd0b6b435f89c83.setIcon(div_icon_f9d0eb5d68a00b2a2f193f7851ce918f);
+            
+    
+            var circle_marker_0eafe3d135829420bf6a2ddc58f1a97a = L.circleMarker(
+                [33.8745011, -117.7442139],
+                {"bubblingMouseEvents": true, "color": "#FFE66D", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FFE66D", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_46e7d5d4752d232c6a724c7ceeef7f31 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_9ff50606b37ee27e480f65d490aae7bf = $(`<div id="html_9ff50606b37ee27e480f65d490aae7bf" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">West Coast Pickleball</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Both</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 10</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>23061 Savi Ranch Pkwy, Yorba Linda, CA 92887</p>             <p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.wcpb.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Membership: Contact</li></ul></div></div>`)[0];
+                popup_46e7d5d4752d232c6a724c7ceeef7f31.setContent(html_9ff50606b37ee27e480f65d490aae7bf);
+            
+        
+
+        circle_marker_0eafe3d135829420bf6a2ddc58f1a97a.bindPopup(popup_46e7d5d4752d232c6a724c7ceeef7f31)
+        ;
+
+        
+    
+    
+            circle_marker_0eafe3d135829420bf6a2ddc58f1a97a.bindTooltip(
+                `<div>
+                     West Coast Pickleball (10 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_d082f4ab9edc5e62604b876faa6d842f = L.marker(
+                [33.8745011, -117.7442139],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_f223db5c8c1e1c14b181f942d9d2eba0 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        10\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_d082f4ab9edc5e62604b876faa6d842f.setIcon(div_icon_f223db5c8c1e1c14b181f942d9d2eba0);
+            
+    
+            var circle_marker_b4cd9de6af13b45c44dd2cd3971e8013 = L.circleMarker(
+                [37.7414977, -121.4271816],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_8bfea8351b4ac99ac6b267711b2d54e4 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_eb9611ffe1d327a09dfb4038ada93fff = $(`<div id="html_eb9611ffe1d327a09dfb4038ada93fff" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">West Hollywood Park Pickleball</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 6</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>West Hollywood Park, West Hollywood, CA 90069</p>             <p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.weho.org/community/recreation-services/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Court Reservation: $8.00</li><li>Open Play: $10.00</li></ul></div></div>`)[0];
+                popup_8bfea8351b4ac99ac6b267711b2d54e4.setContent(html_eb9611ffe1d327a09dfb4038ada93fff);
+            
+        
+
+        circle_marker_b4cd9de6af13b45c44dd2cd3971e8013.bindPopup(popup_8bfea8351b4ac99ac6b267711b2d54e4)
+        ;
+
+        
+    
+    
+            circle_marker_b4cd9de6af13b45c44dd2cd3971e8013.bindTooltip(
+                `<div>
+                     West Hollywood Park Pickleball (6 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_9d2606aa8c610a3144a254ac04d6f41b = L.marker(
+                [37.7414977, -121.4271816],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_6a54268cc33012972139e86e2f84905a = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        6\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_9d2606aa8c610a3144a254ac04d6f41b.setIcon(div_icon_6a54268cc33012972139e86e2f84905a);
+            
+    
+            var circle_marker_1e25460af2baff49eb6c5e563b1e1d92 = L.circleMarker(
+                [34.1812807, -118.4577728],
+                {"bubblingMouseEvents": true, "color": "#FF6B6B", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FF6B6B", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_0d962f04c819e319a31640abcb70d3c1 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_35ebffcc62752bd8802a25e46534be65 = $(`<div id="html_35ebffcc62752bd8802a25e46534be65" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Wolf and Bear Indoor Pickleball</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Indoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 12</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>14911 Calvert St, Van Nuys, CA 91411</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 398-3440</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.wolfandbearpickleball.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Family Membership: $419.99</li><li>Individual Membership: Contact</li><li>Couple Membership: Contact</li></ul></div></div>`)[0];
+                popup_0d962f04c819e319a31640abcb70d3c1.setContent(html_35ebffcc62752bd8802a25e46534be65);
+            
+        
+
+        circle_marker_1e25460af2baff49eb6c5e563b1e1d92.bindPopup(popup_0d962f04c819e319a31640abcb70d3c1)
+        ;
+
+        
+    
+    
+            circle_marker_1e25460af2baff49eb6c5e563b1e1d92.bindTooltip(
+                `<div>
+                     Wolf and Bear Indoor Pickleball (12 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_2554acdf00139aa6996d90c5f68226e6 = L.marker(
+                [34.1812807, -118.4577728],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_16bc765e05860ef5ac1a04263adbdf04 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        12\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_2554acdf00139aa6996d90c5f68226e6.setIcon(div_icon_16bc765e05860ef5ac1a04263adbdf04);
+            
+    
+            var circle_marker_bbdc2ccbb9206369af1ae3b4949ae6e5 = L.circleMarker(
+                [34.1768457, -118.6144978],
+                {"bubblingMouseEvents": true, "color": "#FFE66D", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#FFE66D", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_805d994e409d3da926d4de945aca67f3 = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_20ec9bac1c2410e624e657f05fc77f25 = $(`<div id="html_20ec9bac1c2410e624e657f05fc77f25" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Woodland Hills Recreation Center</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Both</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 3</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>5858 Shoup Ave, Woodland Hills, CA 91367</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (818) 883-9370</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://www.laparks.org/pickleball" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Outdoor Drop-in: Contact</li><li>Indoor: Contact</li></ul></div></div>`)[0];
+                popup_805d994e409d3da926d4de945aca67f3.setContent(html_20ec9bac1c2410e624e657f05fc77f25);
+            
+        
+
+        circle_marker_bbdc2ccbb9206369af1ae3b4949ae6e5.bindPopup(popup_805d994e409d3da926d4de945aca67f3)
+        ;
+
+        
+    
+    
+            circle_marker_bbdc2ccbb9206369af1ae3b4949ae6e5.bindTooltip(
+                `<div>
+                     Woodland Hills Recreation Center (3 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_e8613fbb83b762090fdfcc5697038bb5 = L.marker(
+                [34.1768457, -118.6144978],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_80ebae707383b2d06e1e587332d20639 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        3\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_e8613fbb83b762090fdfcc5697038bb5.setIcon(div_icon_80ebae707383b2d06e1e587332d20639);
+            
+    
+            var circle_marker_7b176cf46157f00a99456dd610ee6f06 = L.circleMarker(
+                [33.6740884, -118.0030682],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_376c2e30bdd51c12745d84dfe286f0bc = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_5fc06fd03268c591681f2aba0ff55ca0 = $(`<div id="html_5fc06fd03268c591681f2aba0ff55ca0" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">Worthy Park</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 4</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1831 17th Street, Huntington Beach, CA 92648</p>             <p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Free: Contact</li></ul></div></div>`)[0];
+                popup_376c2e30bdd51c12745d84dfe286f0bc.setContent(html_5fc06fd03268c591681f2aba0ff55ca0);
+            
+        
+
+        circle_marker_7b176cf46157f00a99456dd610ee6f06.bindPopup(popup_376c2e30bdd51c12745d84dfe286f0bc)
+        ;
+
+        
+    
+    
+            circle_marker_7b176cf46157f00a99456dd610ee6f06.bindTooltip(
+                `<div>
+                     Worthy Park (4 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_51a37705b3592d56e3cb2488b40d74aa = L.marker(
+                [33.6740884, -118.0030682],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_a6ea6773d99cef0efe4b4070ba0dfc49 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        4\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_51a37705b3592d56e3cb2488b40d74aa.setIcon(div_icon_a6ea6773d99cef0efe4b4070ba0dfc49);
+            
+    
+            var circle_marker_b4521aa8749b9c7af2a321a823c9f23a = L.circleMarker(
+                [34.116952, -118.1678456],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_83529f00b6e1e74b0a3b4ef2de1a094e = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_94720afe6e2bbf5e199ea2f1cf2662ba = $(`<div id="html_94720afe6e2bbf5e199ea2f1cf2662ba" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">iPickle Arroyo Seco</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 12</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>920 Lohman Lane, South Pasadena, CA 91030</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (323) 258-4178</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://ipickle.com/south-pasadena/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Membership: Contact</li><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_83529f00b6e1e74b0a3b4ef2de1a094e.setContent(html_94720afe6e2bbf5e199ea2f1cf2662ba);
+            
+        
+
+        circle_marker_b4521aa8749b9c7af2a321a823c9f23a.bindPopup(popup_83529f00b6e1e74b0a3b4ef2de1a094e)
+        ;
+
+        
+    
+    
+            circle_marker_b4521aa8749b9c7af2a321a823c9f23a.bindTooltip(
+                `<div>
+                     iPickle Arroyo Seco (12 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_821e51416ce7aee1797cc82659699fba = L.marker(
+                [34.116952, -118.1678456],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_77018fb0779271eb77f8895781d5b667 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        12\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_821e51416ce7aee1797cc82659699fba.setIcon(div_icon_77018fb0779271eb77f8895781d5b667);
+            
+    
+            var circle_marker_eb8639b05222bba2be329b41c0312449 = L.circleMarker(
+                [33.8521766, -118.0634006],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_71648c1f12b3d4a755a0942a38a90c4f = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_d605a10d06df5971d63ad3cd3019d8de = $(`<div id="html_d605a10d06df5971d63ad3cd3019d8de" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">iPickle Cerritos</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 10</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>19700 Bloomfield Ave, Cerritos, CA 90703</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (562) 826-1587</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://ipickle.com/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Membership: Contact</li><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_71648c1f12b3d4a755a0942a38a90c4f.setContent(html_d605a10d06df5971d63ad3cd3019d8de);
+            
+        
+
+        circle_marker_eb8639b05222bba2be329b41c0312449.bindPopup(popup_71648c1f12b3d4a755a0942a38a90c4f)
+        ;
+
+        
+    
+    
+            circle_marker_eb8639b05222bba2be329b41c0312449.bindTooltip(
+                `<div>
+                     iPickle Cerritos (10 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_d3891d4d76129b8e6b1ec8ea8d25bdd6 = L.marker(
+                [33.8521766, -118.0634006],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_1ed33bf1aba4cf905beb5525f3ff3e3c = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        10\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_d3891d4d76129b8e6b1ec8ea8d25bdd6.setIcon(div_icon_1ed33bf1aba4cf905beb5525f3ff3e3c);
+            
+    
+            var circle_marker_4a14c1fd77fefce7d4890809318c4e69 = L.circleMarker(
+                [33.9289583, -117.946213],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_eb6563da709a6bf155e5bf2962d560ce = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_64ea712594310a323ef4d1f357f31a95 = $(`<div id="html_64ea712594310a323ef4d1f357f31a95" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">iPickle La Habra</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 17</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>351 S. Euclid Street, La Habra, CA 90631</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (562) 690-5040</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://ipickle.com/la-habra/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Membership: Contact</li><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_eb6563da709a6bf155e5bf2962d560ce.setContent(html_64ea712594310a323ef4d1f357f31a95);
+            
+        
+
+        circle_marker_4a14c1fd77fefce7d4890809318c4e69.bindPopup(popup_eb6563da709a6bf155e5bf2962d560ce)
+        ;
+
+        
+    
+    
+            circle_marker_4a14c1fd77fefce7d4890809318c4e69.bindTooltip(
+                `<div>
+                     iPickle La Habra (17 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_0841a00600dfaf4b45664556abe4ad4e = L.marker(
+                [33.9289583, -117.946213],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_06e8d2bc1bbd3bc1c0b73d2fc93e2da5 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        17\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_0841a00600dfaf4b45664556abe4ad4e.setIcon(div_icon_06e8d2bc1bbd3bc1c0b73d2fc93e2da5);
+            
+    
+            var circle_marker_129b879a9c33ec5182e3edbe97b56f86 = L.circleMarker(
+                [34.0428625, -118.0557184],
+                {"bubblingMouseEvents": true, "color": "#4ECDC4", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#4ECDC4", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 2}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+        var popup_0c7f18db9ce8acc8bfc7cb7532ae45be = L.popup({
+  "maxWidth": 350,
+});
+
+        
+            
+                var html_c6db8645c9394053f3784a1c14da0d59 = $(`<div id="html_c6db8645c9394053f3784a1c14da0d59" style="width: 100.0%; height: 100.0%;">             <div style="font-family: Arial; width: 300px;">                 <h4 style="margin: 0 0 10px 0; color: #2C3E50;">iPickle The Narrows</h4>                 <p style="margin: 5px 0;"><strong>Type:</strong> Outdoor</p>                 <p style="margin: 5px 0;"><strong>Courts:</strong> 28</p>                 <p style="margin: 5px 0;"><strong>Address:</strong><br>1201 Potrero Ave, South El Monte, CA 91733</p>             <p style="margin: 5px 0;"><strong>Phone:</strong> (626) 944-0453</p><p style="margin: 5px 0;"><strong>Website:</strong> <a href="https://whittiernarrows.i-tennis.com/pickleball/" target="_blank">Visit</a></p><p style="margin: 5px 0;"><strong>Pricing:</strong></p><ul style="margin: 5px 0; padding-left: 20px;"><li>Membership: Contact</li><li>Drop-in: Contact</li></ul></div></div>`)[0];
+                popup_0c7f18db9ce8acc8bfc7cb7532ae45be.setContent(html_c6db8645c9394053f3784a1c14da0d59);
+            
+        
+
+        circle_marker_129b879a9c33ec5182e3edbe97b56f86.bindPopup(popup_0c7f18db9ce8acc8bfc7cb7532ae45be)
+        ;
+
+        
+    
+    
+            circle_marker_129b879a9c33ec5182e3edbe97b56f86.bindTooltip(
+                `<div>
+                     iPickle The Narrows (28 courts)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_64e727f4c34bc66fee69e7ad14cd6363 = L.marker(
+                [34.0428625, -118.0557184],
+                {
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+    
+            var div_icon_54ebd14905612fda36d293f8613e5806 = L.divIcon({
+  "html": "\n                    \u003cdiv style=\"font-size: 10pt; \n                                color: white; \n                                font-weight: bold; \n                                text-align: center;\n                                text-shadow: 1px 1px 2px rgba(0,0,0,0.8);\n                                pointer-events: none;\n                                width: 20px;\n                                margin-left: -10px;\n                                margin-top: -10px;\"\u003e\n                        28\n                    \u003c/div\u003e\n                ",
+  "className": "empty",
+});
+        
+    
+                marker_64e727f4c34bc66fee69e7ad14cd6363.setIcon(div_icon_54ebd14905612fda36d293f8613e5806);
+            
+    
+            L.control.fullscreen(
+                {
+  "position": "topleft",
+  "title": "Full Screen",
+  "titleCancel": "Exit Full Screen",
+  "forceSeparateButton": false,
+}
+            ).addTo(map_577cd1e2958c609247f8e8cf6364de84);
+        
+</script>
+</html>
